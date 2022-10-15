@@ -1,0 +1,24 @@
+{
+	"name": "viesapi/client",
+	"description": "VIES API Client for PHP",
+	"type": "library",
+	"keywords": [ "viesapi", "api", "vat", "nip", "eu", "vies", "validator" ],
+	"license": "Apache-2.0",
+	"homepage": "https://viesapi.eu",
+	"authors": [
+        {
+            "name": "NETCAT",
+            "email": "firma@netcat.pl",
+            "homepage": "https://netcat.pl"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "VIESAPI\\": "VIESAPI/" }
+    },
+    "require": {
+		"php": ">=5.6",
+        "ext-simplexml": "*",
+        "ext-openssl": "*",
+        "ext-curl": "*"
+    }
+}
