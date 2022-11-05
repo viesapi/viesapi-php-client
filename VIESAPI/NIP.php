@@ -62,18 +62,7 @@ class NIP
             return false;
         }
         
-        $w = array(
-            6,
-            5,
-            7,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-        );
-        
+        $w = array(6, 5, 7, 2, 3, 4, 5, 6, 7);
         $sum = 0;
         
         for ($i = 0; $i < count($w); $i ++) {
