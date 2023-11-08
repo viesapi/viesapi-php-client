@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022 NETCAT (www.netcat.pl)
+ * Copyright 2022-2023 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022 NETCAT (www.netcat.pl)
+ * @copyright 2022-2023 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.2.5';
+    const VERSION = '1.2.6';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -141,28 +141,13 @@ class VIESAPIClient
         $url = ($this->url . '/get/vies/' . $suffix);
     
         // send request
-        $res = $this->get($url);
+        $doc = $this->get($url);
     
-        if (! $res) {
-            $this->set(Error::CLI_CONNECT);
+        if (! $doc) {
             return false;
         }
     
         // parse response
-        $doc = simplexml_load_string($res);
-    
-        if (! $doc) {
-            $this->set(Error::CLI_RESPONSE);
-            return false;
-        }
-    
-        $code = $this->xpath($doc, '/result/error/code/text()');
-    
-        if (strlen($code) > 0) {
-            $this->set(intval($code), $this->xpath($doc, '/result/error/description/text()'));
-            return false;
-        }
-    
         $vies = new VIESData();
     
         $vies->uid = $this->xpath($doc, '/result/vies/uid/text()');
@@ -196,28 +181,13 @@ class VIESAPIClient
         $url = ($this->url . '/check/account/status');
     
         // send request
-        $res = $this->get($url);
+        $doc = $this->get($url);
     
-        if (! $res) {
-            $this->set(Error::CLI_CONNECT);
+        if (! $doc) {
             return false;
         }
     
         // parse response
-        $doc = simplexml_load_string($res);
-    
-        if (! $doc) {
-            $this->set(Error::CLI_RESPONSE);
-            return false;
-        }
-    
-        $code = $this->xpath($doc, '/result/error/code/text()');
-    
-        if (strlen($code) > 0) {
-            $this->set(intval($code), $this->xpath($doc, '/result/error/description/text()'));
-            return false;
-        }
-    
         $as = new AccountStatus();
     
         $as->uid = $this->xpath($doc, '/result/account/uid/text()');
@@ -362,7 +332,7 @@ class VIESAPIClient
      * 
      * @param string $url
      *            target URL
-     * @return string|false
+     * @return \SimpleXMLElement|false
      */
     private function get($url)
     {
@@ -370,19 +340,22 @@ class VIESAPIClient
         $auth = $this->auth('GET', $url);
         
         if (! $auth) {
+            $this->set(Error::CLI_CONNECT);
             return false;
         }
         
         // headers
         $headers = array(
-            $this->user_agent(),
-            $auth
+            'Accept: text/xml',
+            $auth,
+            $this->user_agent()
         );
         
         // send request
         $curl = curl_init();
         
         if (! $curl) {
+            $this->set(Error::CLI_CONNECT);
             return false;
         }
         
@@ -394,12 +367,38 @@ class VIESAPIClient
         $res = curl_exec($curl);
         
         if (! $res) {
+            $this->set(Error::CLI_CONNECT);
             return false;
         }
         
         curl_close($curl);
-        
-        return $res;
+
+        // parse response
+        $doc = simplexml_load_string($res);
+
+        if (! $doc) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        $err = $this->xpath($doc, '/result/error/code/text()');
+
+        if (strlen($err) > 0) {
+            $this->set(intval($err), $this->xpath($doc, '/result/error/description/text()'));
+            return false;
+        }
+
+        if (!($code = curl_getinfo($curl, CURLINFO_HTTP_CODE))) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        if ($code != 200) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        return $doc;
     }
 
     /**
