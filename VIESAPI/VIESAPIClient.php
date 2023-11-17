@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.2.6';
+    const VERSION = '1.2.7';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -370,8 +370,15 @@ class VIESAPIClient
             $this->set(Error::CLI_CONNECT);
             return false;
         }
-        
+
+        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
         curl_close($curl);
+
+        if (! $code) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
 
         // parse response
         $doc = simplexml_load_string($res);
@@ -385,11 +392,6 @@ class VIESAPIClient
 
         if (strlen($err) > 0) {
             $this->set(intval($err), $this->xpath($doc, '/result/error/description/text()'));
-            return false;
-        }
-
-        if (!($code = curl_getinfo($curl, CURLINFO_HTTP_CODE))) {
-            $this->set(Error::CLI_RESPONSE);
             return false;
         }
 
