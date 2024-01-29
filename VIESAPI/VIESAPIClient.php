@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022-2023 NETCAT (www.netcat.pl)
+ * Copyright 2022-2024 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2023 NETCAT (www.netcat.pl)
+ * @copyright 2022-2024 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.2.7';
+    const VERSION = '1.2.8';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -95,8 +95,6 @@ class VIESAPIClient
         
         $this->app = '';
         $this->clear();
-        
-        date_default_timezone_set('Etc/UTC');
     }
 
     /**
@@ -192,7 +190,7 @@ class VIESAPIClient
     
         $as->uid = $this->xpath($doc, '/result/account/uid/text()');
         $as->type = $this->xpath($doc, '/result/account/type/text()');
-        $as->valid_to = $this->xpat_datetime($doc, '/result/account/validTo/text()');
+        $as->valid_to = $this->xpath_datetime($doc, '/result/account/validTo/text()');
 		$as->billing_plan_name = $this->xpath($doc, '/result/account/billingPlan/name/text()');
 		
 		$as->subscription_price = floatval($this->xpath($doc, '/result/account/billingPlan/subscriptionPrice/text()'));
@@ -456,7 +454,7 @@ class VIESAPIClient
      *            xpath string
      * @return string output date time
      */
-    private function xpat_datetime($doc, $path)
+    private function xpath_datetime($doc, $path)
     {
         $val = $this->xpath($doc, $path);
 

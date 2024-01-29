@@ -1,6 +1,6 @@
 {
 	"name": "viesapi/client",
-    "version": "1.2.7",
+    "version": "1.2.8",
 	"description": "VIES API Client for PHP",
 	"type": "library",
 	"keywords": [ "viesapi", "api", "vat", "nip", "eu", "vies", "validator" ],
