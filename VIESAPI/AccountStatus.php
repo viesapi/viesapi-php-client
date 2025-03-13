@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022-2024 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2024 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -39,6 +39,7 @@ class AccountStatus
     public $item_price;
 
     public $item_price_status;
+    public $item_price_parsed;
 
     public $limit;
 
@@ -59,8 +60,11 @@ class AccountStatus
     public $monitor;
 
     public $func_get_vies_data;
+    public $func_get_vies_data_parsed;
 
     public $vies_data_count;
+
+    public $vies_data_parsed_count;
 	
     public $total_count;
 
@@ -78,6 +82,7 @@ class AccountStatus
             . ', subscription_price = ' . $this->subscription_price
             . ', item_price = ' . $this->item_price
             . ', item_price_status = ' . $this->item_price_status
+            . ', item_price_parsed = ' . $this->item_price_parsed
 
             . ', limit = ' . $this->limit
             . ', request_delay = ' . $this->request_delay
@@ -91,8 +96,10 @@ class AccountStatus
             . ', monitor = ' . $this->monitor
 
             . ', func_get_vies_data = ' . $this->func_get_vies_data
+            . ', func_get_vies_data_parsed = ' . $this->func_get_vies_data_parsed
 
             . ', vies_data_count = ' . $this->vies_data_count
+            . ', vies_data_parsed_count = ' . $this->vies_data_parsed_count
             . ', total_count = ' . $this->total_count
             . ']';
     }

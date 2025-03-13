@@ -47,6 +47,16 @@
 			else {
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
 			}
+
+            // Get VIES data from VIES system (with parsed trader address)
+            $vies_parsed = $viesapi->get_vies_data_parsed($euvat);
+
+            if ($vies_parsed) {
+                echo '<pre>' . print_r($vies_parsed, true) . '</pre>';
+            }
+            else {
+                echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
+            }
 		?>
 	</body>
 </html>

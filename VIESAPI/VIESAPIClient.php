@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022-2024 NETCAT (www.netcat.pl)
+ * Copyright 2022-2025 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2024 NETCAT (www.netcat.pl)
+ * @copyright 2022-2025 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.2.8';
+    const VERSION = '1.2.9';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -50,6 +50,7 @@ class VIESAPIClient
         $files = array(
 			'Error.php',
 			'AccountStatus.php',
+            'AddressComponents.php',
             'VIESData.php',
             'NIP.php',
             'EUVAT.php',
@@ -164,7 +165,63 @@ class VIESAPIClient
 
 		return $vies;
     }
-    
+
+    /**
+     * Get VIES data for specified number with trader address parsed into components
+     *
+     * @param string $euvat
+     *            EU VAT number with 2-letter country prefix
+     * @return VIESData|false
+     */
+    public function get_vies_data_parsed($euvat)
+    {
+        // clear error
+        $this->clear();
+
+        // validate number and construct path
+        if (! ($suffix = $this->get_path_suffix(Number::EUVAT, $euvat))) {
+            return false;
+        }
+
+        $url = ($this->url . '/get/vies/parsed/' . $suffix);
+
+        // send request
+        $doc = $this->get($url);
+
+        if (! $doc) {
+            return false;
+        }
+
+        // parse response
+        $vies = new VIESData();
+
+        $vies->uid = $this->xpath($doc, '/result/vies/uid/text()');
+        $vies->country_code = $this->xpath($doc, '/result/vies/countryCode/text()');
+        $vies->vat_number = $this->xpath($doc, '/result/vies/vatNumber/text()');
+
+        $vies->valid = ($this->xpath($doc, '/result/vies/valid/text()') == 'true' ? true : false);
+
+        $vies->trader_name = $this->xpath($doc, '/result/vies/traderName/text()');
+        $vies->trader_company_type = $this->xpath($doc, '/result/vies/traderCompanyType/text()');
+        $vies->trader_address = $this->xpath($doc, '/result/vies/traderAddress/text()');
+
+        if (!empty($this->xpath($doc, '/result/vies/traderAddressComponents/country/text()'))) {
+            $vies->trader_address_components = new AddressComponents();
+            $vies->trader_address_components->country = $this->xpath($doc, '/result/vies/traderAddressComponents/country/text()');
+            $vies->trader_address_components->postal_code = $this->xpath($doc, '/result/vies/traderAddressComponents/postalCode/text()');
+            $vies->trader_address_components->city = $this->xpath($doc, '/result/vies/traderAddressComponents/city/text()');
+            $vies->trader_address_components->street = $this->xpath($doc, '/result/vies/traderAddressComponents/street/text()');
+            $vies->trader_address_components->street_number = $this->xpath($doc, '/result/vies/traderAddressComponents/streetNumber/text()');
+            $vies->trader_address_components->house_number = $this->xpath($doc, '/result/vies/traderAddressComponents/houseNumber/text()');
+        }
+
+        $vies->id = $this->xpath($doc, '/result/vies/id/text()');
+        $vies->date = $this->xpath_date($doc, '/result/vies/date/text()');
+        $vies->source = $this->xpath($doc, '/result/vies/source/text()');
+
+        return $vies;
+    }
+
     /**
      * Get current account status
      * 
@@ -196,6 +253,7 @@ class VIESAPIClient
 		$as->subscription_price = floatval($this->xpath($doc, '/result/account/billingPlan/subscriptionPrice/text()'));
 		$as->item_price = floatval($this->xpath($doc, '/result/account/billingPlan/itemPrice/text()'));
 		$as->item_price_status = floatval($this->xpath($doc, '/result/account/billingPlan/itemPriceCheckStatus/text()'));
+        $as->item_price_parsed = floatval($this->xpath($doc, '/result/account/billingPlan/itemPriceStatusParsed/text()'));
 
 		$as->limit = intval($this->xpath($doc, '/result/account/billingPlan/limit/text()'));
 		$as->request_delay = intval($this->xpath($doc, '/result/account/billingPlan/requestDelay/text()'));
@@ -208,9 +266,11 @@ class VIESAPIClient
 		$as->stats = ($this->xpath($doc, '/result/account/billingPlan/stats/text()') == 'true' ? true : false);
 		$as->monitor = ($this->xpath($doc, '/result/account/billingPlan/monitor/text()') == 'true' ? true : false);
 		
-		$as->func_get_vies_data =($this->xpath($doc, '/result/account/billingPlan/funcGetVIESData/text()') == 'true' ? true : false);
+		$as->func_get_vies_data = ($this->xpath($doc, '/result/account/billingPlan/funcGetVIESData/text()') == 'true' ? true : false);
+        $as->func_get_vies_data_parsed = ($this->xpath($doc, '/result/account/billingPlan/funcGetVIESDataParsed/text()') == 'true' ? true : false);
 
 		$as->vies_data_count = intval($this->xpath($doc, '/result/account/requests/viesData/text()'));
+        $as->vies_data_parsed_count = intval($this->xpath($doc, '/result/account/requests/viesDataParsed/text()'));
 		$as->total_count = intval($this->xpath($doc, '/result/account/requests/total/text()'));
         
         return $as;

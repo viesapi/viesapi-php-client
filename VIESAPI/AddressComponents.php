@@ -24,32 +24,19 @@ namespace VIESAPI;
 /**
  * VIES data
  */
-class VIESData
+class AddressComponents
 {
-    public $uid;
-    
-    public $country_code;
+    public $country;
 
-    public $vat_number;
+    public $postal_code;
 
-    public $valid;
+    public $city;
 
-    public $trader_name;
+    public $street;
 
-    public $trader_company_type;
+    public $street_number;
 
-    public $trader_address;
-
-    /**
-     * @var AddressComponents
-     */
-    public $trader_address_components;
-
-    public $id;
-
-    public $date;
-
-    public $source;
+    public $house_number;
 
     /**
      * Get object data as string
@@ -57,17 +44,12 @@ class VIESData
      */
     public function __toString()
     {
-        return 'VIESData: [uid = ' . $this->uid
-            . ', country_code = ' . $this->country_code
-            . ', vat_number = ' . $this->vat_number
-            . ', valid = ' . ($this->valid ? 'true' : 'false')
-            . ', trader_name = ' . $this->trader_name
-            . ', trader_company_type = ' . $this->trader_company_type
-            . ', trader_address = ' . $this->trader_address
-            . ', trader_address_components = ' . $this->trader_address_components
-            . ', id = ' . $this->id
-            . ', date = ' . $this->date
-            . ', source = ' . $this->source
+        return 'AddressComponents: [country = ' . $this->country
+            . ', postal_code = ' . $this->postal_code
+            . ', city = ' . $this->city
+            . ', street = ' . $this->street
+            . ', street_number = ' . $this->street_number
+            . ', house_number = ' . $this->house_number
             . ']';
     }
 }
