@@ -26,64 +26,47 @@ namespace VIESAPI;
  */
 class Error
 {
-	const NIP_EMPTY				= 1;
-	const NIP_UNKNOWN			= 2;
-	const GUS_LOGIN				= 3;
-	const GUS_CAPTCHA			= 4;
-	const GUS_SYNC				= 5;
-	const NIP_UPDATE			= 6;
-	const NIP_BAD				= 7;
-	const CONTENT_SYNTAX		= 8;
-	const NIP_NOT_ACTIVE		= 9;
-	const INVALID_PATH			= 10;
-	const EXCEPTION				= 11;
-	const NO_PERMISSION			= 12;
-	const GEN_INVOICES			= 13;
-	const GEN_SPEC_INV			= 14;
-	const SEND_INVOICE			= 15;
-	const PREMIUM_FEATURE		= 16;
-	const SEND_ANNOUNCEMENT		= 17;
-	const INVOICE_PAYMENT		= 18;
-	const REGON_BAD				= 19;
-	const SEARCH_KEY_EMPTY		= 20;
-	const KRS_BAD				= 21;
-	const EUVAT_BAD				= 22;
-	const VIES_SYNC				= 23;
-	const CEIDG_SYNC			= 24;
-	const RANDOM_NUMBER			= 25;
-	const PLAN_FEATURE			= 26;
-	const SEARCH_TYPE			= 27;
-	const PPUMF_SYNC			= 28;
-	const PPUMF_DIRECT			= 29;
-	const NIP_FEATURE			= 30;
-	const REGON_FEATURE			= 31;
-	const KRS_FEATURE			= 32;
-	const TEST_MODE				= 33;
-	const ACTIVITY_CHECK		= 34;
-	const ACCESS_DENIED			= 35;
-	const MAINTENANCE			= 36;
-	const BILLING_PLANS			= 37;
-	const DOCUMENT_PDF			= 38;
-	const EXPORT_PDF			= 39;
-	const RANDOM_TYPE			= 40;
-	const LEGAL_FORM			= 41;
-	const GROUP_CHECKS			= 42;
-	const CLIENT_COUNTERS		= 43;
-	const URE_SYNC				= 44;
-	const URE_DATA				= 45;
-	const DKN_BAD				= 46;
-	const SEND_REMAINDER		= 47;
-	const EXPORT_JPK			= 48;
-	const GEN_ORDER_INV			= 49;
-	const SEND_EXPIRATION		= 50;
-	const IBAN_SYNC				= 51;
-	const ORDER_CANCEL          = 52;
-	const WHITELIST_CHECK       = 53;
-	const AUTH_TIMESTAMP        = 54;
-	const AUTH_MAC              = 55;
-	const IBAN_BAD              = 56;
+    const NIP_BAD				= 7;
+    const CONTENT_SYNTAX		= 8;
+    const INVALID_PATH			= 10;
+    const EXCEPTION				= 11;
+    const NO_PERMISSION			= 12;
+    const GEN_INVOICES			= 13;
+    const GEN_SPEC_INV			= 14;
+    const SEND_INVOICE			= 15;
+    const SEND_ANNOUNCEMENT		= 17;
+    const INVOICE_PAYMENT		= 18;
+    const SEARCH_KEY_EMPTY		= 20;
+    const EUVAT_BAD				= 22;
+    const VIES_SYNC				= 23;
+    const PLAN_FEATURE			= 26;
+    const SEARCH_TYPE			= 27;
+    const NIP_FEATURE			= 30;
+    const TEST_MODE				= 33;
+    const ACCESS_DENIED			= 35;
+    const MAINTENANCE			= 36;
+    const BILLING_PLANS			= 37;
+    const DOCUMENT_PDF			= 38;
+    const EXPORT_PDF			= 39;
+    const GROUP_CHECKS			= 42;
+    const CLIENT_COUNTERS		= 43;
+    const SEND_REMAINDER		= 47;
+    const EXPORT_JPK			= 48;
+    const GEN_ORDER_INV			= 49;
+    const SEND_EXPIRATION		= 50;
+    const ORDER_CANCEL          = 52;
+    const AUTH_TIMESTAMP        = 54;
+    const AUTH_MAC              = 55;
+    const SEND_MAIL             = 56;
+    const AUTH_KEY              = 57;
+    const VIES_TOO_MANY_REQ     = 58;
+    const VIES_UNAVAILABLE      = 59;
+    const GEOCODE               = 60;
+    const BATCH_SIZE            = 61;
+    const BATCH_PROCESSING      = 62;
+    const BATCH_REJECTED        = 63;
 
-	const DB_AUTH_IP			= 101;
+    const DB_AUTH_IP			= 101;
 	const DB_AUTH_KEY_STATUS	= 102;
 	const DB_AUTH_KEY_VALUE		= 103;
 	const DB_AUTH_OVER_PLAN		= 104;
@@ -100,6 +83,7 @@ class Error
 	const CLI_EXCEPTION         = 206;
 	const CLI_DATEFORMAT        = 207;
 	const CLI_INPUT             = 208;
+    const CLI_BATCH_SIZE        = 209;
 
 	private static $codes = array(
 		self::CLI_CONNECT     => 'Failed to connect to the VIES API service',
@@ -109,7 +93,8 @@ class Error
         self::CLI_EUVAT       => 'EU VAT ID is invalid',
 		self::CLI_EXCEPTION   => 'Function generated an exception',
 		self::CLI_DATEFORMAT  => 'Date has an invalid format',
-		self::CLI_INPUT       => 'Invalid input parameter'
+		self::CLI_INPUT       => 'Invalid input parameter',
+        self::CLI_BATCH_SIZE  => 'Batch size limit exceeded [2-99]'
     );
 
     /**
@@ -119,7 +104,7 @@ class Error
      */
 	public static function message($code)
 	{
-	    if ($code < self::CLI_CONNECT || $code > self::CLI_INPUT) {
+	    if ($code < self::CLI_CONNECT || $code > self::CLI_BATCH_SIZE) {
 	        return null;
         }
 

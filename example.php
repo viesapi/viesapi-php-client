@@ -57,6 +57,37 @@
             else {
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
             }
+
+            // Upload batch of VAT numbers and get their current VAT statuses and traders data
+            $numbers = array(
+                $euvat,
+                'DK56314210',
+                'CZ7710043187'
+            );
+
+            $token = $viesapi->get_vies_data_async($numbers);
+
+            if ($token) {
+                echo '<pre>Batch token: ' . $token . '</pre>';
+            }
+            else {
+                echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
+                die();
+            }
+
+            // Check batch result and download data (at production it usually takes 2-3 min for result to be ready)
+            while (($result = $viesapi->get_vies_data_async_result($token)) === false) {
+                if ($viesapi->get_last_error_code() !== \VIESAPI\Error::BATCH_PROCESSING) {
+                    echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
+                    die();
+                }
+
+                echo '<p>Batch is still processing, waiting...</p>';
+                sleep(10);
+            }
+
+            // Batch result is ready
+            echo '<pre>' . print_r($result, true) . '</pre>';
 		?>
 	</body>
 </html>

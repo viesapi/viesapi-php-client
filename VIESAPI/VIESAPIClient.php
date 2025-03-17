@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.2.9';
+    const VERSION = '1.3.0';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -51,7 +51,9 @@ class VIESAPIClient
 			'Error.php',
 			'AccountStatus.php',
             'AddressComponents.php',
+            'BatchResult.php',
             'VIESData.php',
+            'VIESError.php',
             'NIP.php',
             'EUVAT.php',
             'Number.php'
@@ -76,11 +78,8 @@ class VIESAPIClient
 
     /**
      * Construct new service client object
-     * 
-     * @param string $id
-     *            VIES API key identifier
-     * @param string $key
-     *            VIES API key
+     * @param string $id VIES API key identifier
+     * @param string $key VIES API key
      */
     public function __construct($id = null, $key = null)
     {
@@ -100,9 +99,7 @@ class VIESAPIClient
 
     /**
      * Set non default service URL
-     * 
-     * @param string $url
-     *            service URL
+     * @param string $url service URL
      */
     public function set_url($url)
     {
@@ -111,9 +108,7 @@ class VIESAPIClient
 
     /**
      * Set application info
-     * 
-     * @param string $app
-     *            app info
+     * @param string $app app info
      */
     public function set_app($app)
     {
@@ -122,9 +117,7 @@ class VIESAPIClient
 
     /**
      * Get VIES data for specified number
-     *
-     * @param string $euvat
-     *            EU VAT number with 2-letter country prefix
+     * @param string $euvat EU VAT number with 2-letter country prefix
      * @return VIESData|false
      */
     public function get_vies_data($euvat)
@@ -168,9 +161,7 @@ class VIESAPIClient
 
     /**
      * Get VIES data for specified number with trader address parsed into components
-     *
-     * @param string $euvat
-     *            EU VAT number with 2-letter country prefix
+     * @param string $euvat EU VAT number with 2-letter country prefix
      * @return VIESData|false
      */
     public function get_vies_data_parsed($euvat)
@@ -223,8 +214,128 @@ class VIESAPIClient
     }
 
     /**
+     * Upload batch of VAT numbers and get their current VAT statuses and traders data
+     * @param array $numbers array of EU VAT numbers
+     * @return string|false batch token for checking status and getting the result
+     */
+    public function get_vies_data_async($numbers)
+    {
+        // clear error
+        $this->clear();
+
+        // validate input
+        if (count($numbers) < 2 || count($numbers) > 99) {
+            $this->set(Error::CLI_BATCH_SIZE);
+            return false;
+        }
+
+        $req = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
+            . "<request>\r\n"
+            . "  <batch>\r\n"
+            . "    <numbers>\r\n";
+
+        foreach ($numbers as $number) {
+            if (! EUVAT::is_valid($number)) {
+                $this->set(Error::CLI_EUVAT);
+                return false;
+            }
+
+            $req .= "      <number>" . EUVAT::normalize($number) . "</number>\r\n";
+        }
+
+        $req .= "    </numbers>\r\n"
+            . "  </batch>\r\n"
+            . "</request>";
+
+        // send request
+        $doc = $this->post($this->url . '/batch/vies', 'text/xml; charset=UTF-8', $req);
+
+        if (! $doc) {
+            return false;
+        }
+
+        // parse response
+        $token = $this->xpath($doc, '/result/batch/token/text()');
+
+        if (! $token) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        return $token;
+    }
+
+    /**
+     * Check batch result and download data
+     * @param string $token batch token received from get_vies_data_async function
+     * @return BatchResult|false batch result
+     */
+    public function get_vies_data_async_result($token)
+    {
+        // clear error
+        $this->clear();
+
+        // validate input
+        if (! $this->is_guid($token)) {
+            $this->set(Error::CLI_INPUT);
+            return false;
+        }
+
+        // send request
+        $doc = $this->get($this->url . '/batch/vies/' . urlencode($token));
+
+        if (! $doc) {
+            return false;
+        }
+
+        // parse response
+        $br = new BatchResult();
+
+        for ($i = 1; ; $i++) {
+            $uid = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/uid/text()');
+
+            if (! $uid) {
+                break;
+            }
+
+            $vd = new VIESData();
+            $vd->uid = $uid;
+            $vd->country_code = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/countryCode/text()');
+            $vd->vat_number = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/vatNumber/text()');
+            $vd->valid = ($this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/valid/text()') == 'true' ? true : false);
+            $vd->trader_name = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderName/text()');
+            $vd->trader_company_type = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderCompanyType/text()');
+            $vd->trader_address = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderAddress/text()');
+            $vd->id = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/id/text()');
+            $vd->date = $this->xpath_date($doc, '/result/batch/numbers/vies[' . $i . ']/date/text()');
+            $vd->source = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/source/text()');
+
+            $br->numbers[] = $vd;
+        }
+
+        for ($i = 1; ; $i++) {
+            $uid = $this->xpath($doc, '/result/batch/errors/error[' . $i . ']/uid/text()');
+
+            if (! $uid) {
+                break;
+            }
+
+            $ve = new VIESError();
+            $ve->uid = $uid;
+            $ve->country_code = $this->xpath($doc, '/result/batch/errors/error[' . $i . ']/countryCode/text()');
+            $ve->vat_number = $this->xpath($doc, '/result/batch/errors/error[' . $i . ']/vatNumber/text()');
+            $ve->error = $this->xpath($doc, '/result/batch/errors/error[' . $i . ']/error/text()');
+            $ve->date = $this->xpath_date($doc, '/result/batch/errors/error[' . $i . ']/date/text()');
+            $ve->source = $this->xpath($doc, '/result/batch/errors/error[' . $i . ']/source/text()');
+
+            $br->errors[] = $ve;
+        }
+
+        return $br;
+    }
+
+    /**
      * Get current account status
-     * 
      * @return AccountStatus|false
      */
     public function get_account_status()
@@ -278,7 +389,6 @@ class VIESAPIClient
 
 	/**
      * Get last error code
-     * 
      * @return int error code
      */
     public function get_last_error_code()
@@ -288,7 +398,6 @@ class VIESAPIClient
 
     /**
      * Get last error message
-     *
      * @return string error message
      */
     public function get_last_error()
@@ -307,7 +416,6 @@ class VIESAPIClient
 
     /**
      * Set error details
-     *
      * @param int $code error code
      * @param string $err error message
      */
@@ -319,11 +427,8 @@ class VIESAPIClient
 
     /**
      * Prepare authorization header content
-     * 
-     * @param string $method
-     *            HTTP method
-     * @param string $url
-     *            target URL
+     * @param string $method HTTP method
+     * @param string $url target URL
      * @return string|false
      */
     private function auth($method, $url)
@@ -358,7 +463,6 @@ class VIESAPIClient
 
     /**
      * Prepare user agent information header content
-     * 
      * @return string
      */
     private function user_agent()
@@ -369,7 +473,6 @@ class VIESAPIClient
 
     /**
      * Set some common CURL options
-     * 
      * @param resource $curl
      */
     private function set_curl_opt($curl)
@@ -387,9 +490,7 @@ class VIESAPIClient
 
     /**
      * Get result of HTTP GET request
-     * 
-     * @param string $url
-     *            target URL
+     * @param string $url target URL
      * @return \SimpleXMLElement|false
      */
     private function get($url)
@@ -462,12 +563,88 @@ class VIESAPIClient
     }
 
     /**
+     * Get result of HTTP POST request
+     * @param string $url target URL
+     * @param string $content_type content type
+     * @param string $content content
+     * @return \SimpleXMLElement|false
+     */
+    private function post($url, $content_type, $content)
+    {
+        // auth
+        $auth = $this->auth('POST', $url);
+
+        if (! $auth) {
+            $this->set(Error::CLI_CONNECT);
+            return false;
+        }
+
+        // headers
+        $headers = array(
+            'Accept: text/xml',
+            $auth,
+            'Content-Type: ' . $content_type,
+            'Content-Length: ' . strlen($content),
+            $this->user_agent()
+        );
+
+        // send request
+        $curl = curl_init();
+
+        if (! $curl) {
+            $this->set(Error::CLI_CONNECT);
+            return false;
+        }
+
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
+        $this->set_curl_opt($curl);
+
+        $res = curl_exec($curl);
+
+        if (! $res) {
+            $this->set(Error::CLI_CONNECT);
+            return false;
+        }
+
+        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        curl_close($curl);
+
+        if (! $code) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        // parse response
+        $doc = simplexml_load_string($res);
+
+        if (! $doc) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        $err = $this->xpath($doc, '/result/error/code/text()');
+
+        if (strlen($err) > 0) {
+            $this->set(intval($err), $this->xpath($doc, '/result/error/description/text()'));
+            return false;
+        }
+
+        if ($code != 200) {
+            $this->set(Error::CLI_RESPONSE);
+            return false;
+        }
+
+        return $doc;
+    }
+
+    /**
      * Get element content as text
-     * 
-     * @param \SimpleXMLElement $doc
-     *            XML document
-     * @param string $path
-     *            xpath string
+     * @param \SimpleXMLElement $doc XML document
+     * @param string $path xpath string
      * @return string
      */
     private function xpath($doc, $path)
@@ -487,11 +664,8 @@ class VIESAPIClient
 
     /**
      * Get element content as date in format yyyy-mm-dd
-     * 
-     * @param \SimpleXMLElement $doc
-     *            XML document
-     * @param string $path
-     *            xpath string
+     * @param \SimpleXMLElement $doc XML document
+     * @param string $path xpath string
      * @return string output date
      */
     private function xpath_date($doc, $path)
@@ -507,11 +681,8 @@ class VIESAPIClient
 
     /**
      * Get element content as date and time in format yyyy-mm-dd hh:mm:ss
-     *
-     * @param \SimpleXMLElement $doc
-     *            XML document
-     * @param string $path
-     *            xpath string
+     * @param \SimpleXMLElement $doc XML document
+     * @param string $path xpath string
      * @return string output date time
      */
     private function xpath_datetime($doc, $path)
@@ -527,11 +698,8 @@ class VIESAPIClient
 
     /**
      * Get path suffix
-     *
-     * @param int $type
-     *            search number type as Number::xxx value
-     * @param string $number
-     *            search number value
+     * @param int $type search number type as Number::xxx value
+     * @param string $number search number value
      * @return string|false
      */
     private function get_path_suffix($type, $number)
@@ -556,6 +724,20 @@ class VIESAPIClient
         }
         
         return $path;
+    }
+
+    /**
+     * Checks if specified string is valid GUID
+     * @param string $guid input string
+     * @return bool true if string is valid GUID
+     */
+    public function is_guid($guid)
+    {
+        if (preg_match('/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i', $guid) != 1) {
+            return false;
+        }
+
+        return true;
     }
 }
 
