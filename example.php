@@ -18,12 +18,12 @@
 			
 			\VIESAPI\VIESAPIClient::registerAutoloader();
 			
-			// Create client object and establish connection to the production system
+			// Create a client object and establish connection to the production system
 			// id – API identifier
 			// key – API key (keep it secret)
 			// $viesapi = new \VIESAPI\VIESAPIClient('id', 'key');
 			
-			// Create client object and establish connection to the test system
+			// Create a client object and establish connection to the test system
 			$viesapi = new \VIESAPI\VIESAPIClient();
 			
 			$euvat = 'PL7171642051';
@@ -38,7 +38,7 @@
 				echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
 			}
 
-			// Get VIES data from VIES system
+			// Get VIES data from a VIES system
 			$vies = $viesapi->get_vies_data($euvat);
 				
 			if ($vies) {
@@ -48,7 +48,7 @@
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
 			}
 
-            // Get VIES data from VIES system (with parsed trader address)
+            // Get VIES data from a VIES system (with parsed trader name and address)
             $vies_parsed = $viesapi->get_vies_data_parsed($euvat);
 
             if ($vies_parsed) {
@@ -58,7 +58,7 @@
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
             }
 
-            // Upload batch of VAT numbers and get their current VAT statuses and traders data
+            // Upload batch of VAT numbers and get their current VAT statuses and trader data
             $numbers = array(
                 $euvat,
                 'DK56314210',
@@ -75,7 +75,7 @@
                 die();
             }
 
-            // Check batch result and download data (at production it usually takes 2-3 min for result to be ready)
+            // Check batch result and download data (at production it usually takes 2-3 min for a result to be ready)
             while (($result = $viesapi->get_vies_data_async_result($token)) === false) {
                 if ($viesapi->get_last_error_code() !== \VIESAPI\Error::BATCH_PROCESSING) {
                     echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';

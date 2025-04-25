@@ -98,7 +98,7 @@ class Error
     );
 
     /**
-     * Get error message
+     * Get an error message
      * @param int $code error code
      * @return string error message
      */

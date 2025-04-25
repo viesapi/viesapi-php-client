@@ -5,8 +5,8 @@ This is the official repository for VIES API Client for PHP: https://viesapi.eu
 Viesapi.eu service provides selected entrepreneurs data using i.a. web services, programming libraries and dedicated applications.
 By using the available software (libraries, applications and Excel add-in) your customers will be able to:
 
-* check contractors EU VAT number status in VIES system,
-* download company details from VIES system,
+* check contractors EU VAT number status in a VIES system,
+* download company details from a VIES system,
 * automatic fill in the invoice forms,
 
 in the fastest possible way.

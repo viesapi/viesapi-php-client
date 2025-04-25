@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.3.0';
+    const VERSION = '1.3.1';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -49,7 +49,9 @@ class VIESAPIClient
     {
         $files = array(
 			'Error.php',
+            'LegalForm.php',
 			'AccountStatus.php',
+            'NameComponents.php',
             'AddressComponents.php',
             'BatchResult.php',
             'VIESData.php',
@@ -190,9 +192,18 @@ class VIESAPIClient
         $vies->country_code = $this->xpath($doc, '/result/vies/countryCode/text()');
         $vies->vat_number = $this->xpath($doc, '/result/vies/vatNumber/text()');
 
-        $vies->valid = ($this->xpath($doc, '/result/vies/valid/text()') == 'true' ? true : false);
+        $vies->valid = ($this->xpath($doc, '/result/vies/valid/text()') == 'true');
 
         $vies->trader_name = $this->xpath($doc, '/result/vies/traderName/text()');
+
+        if (!empty($this->xpath($doc, '/result/vies/traderNameComponents/name/text()'))) {
+            $vies->trader_name_components = new NameComponents();
+            $vies->trader_name_components->name = $this->xpath($doc, '/result/vies/traderNameComponents/name/text()');
+            $vies->trader_name_components->legal_form = $this->xpath($doc, '/result/vies/traderNameComponents/legalForm/text()');
+            $vies->trader_name_components->legal_form_canonical_id = intval($this->xpath($doc, '/result/vies/traderNameComponents/legalFormCanonicalId/text()'));
+            $vies->trader_name_components->legal_form_canonical_name = $this->xpath($doc, '/result/vies/traderNameComponents/legalFormCanonicalName/text()');
+        }
+
         $vies->trader_company_type = $this->xpath($doc, '/result/vies/traderCompanyType/text()');
         $vies->trader_address = $this->xpath($doc, '/result/vies/traderAddress/text()');
 

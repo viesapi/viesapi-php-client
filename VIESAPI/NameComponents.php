@@ -22,21 +22,17 @@
 namespace VIESAPI;
 
 /**
- * Trader address components
+ * Trader name components
  */
-class AddressComponents
+class NameComponents
 {
-    public $country;
+    public $name;
 
-    public $postal_code;
+    public $legal_form;
 
-    public $city;
+    public $legal_form_canonical_id;
 
-    public $street;
-
-    public $street_number;
-
-    public $house_number;
+    public $legal_form_canonical_name;
 
     /**
      * Get object data as string
@@ -44,12 +40,10 @@ class AddressComponents
      */
     public function __toString()
     {
-        return 'AddressComponents: [country = ' . $this->country
-            . ', postal_code = ' . $this->postal_code
-            . ', city = ' . $this->city
-            . ', street = ' . $this->street
-            . ', street_number = ' . $this->street_number
-            . ', house_number = ' . $this->house_number
+        return 'NameComponents: [name = ' . $this->name
+            . ', legal_form = ' . $this->legal_form
+            . ', legal_form_canonical_id = ' . $this->legal_form_canonical_id
+            . ', legal_form_canonical_name = ' . $this->legal_form_canonical_name
             . ']';
     }
 }

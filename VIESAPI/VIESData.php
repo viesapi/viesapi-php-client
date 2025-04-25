@@ -36,6 +36,11 @@ class VIESData
 
     public $trader_name;
 
+    /**
+     * @var NameComponents
+     */
+    public $trader_name_components;
+
     public $trader_company_type;
 
     public $trader_address;
@@ -62,6 +67,7 @@ class VIESData
             . ', vat_number = ' . $this->vat_number
             . ', valid = ' . ($this->valid ? 'true' : 'false')
             . ', trader_name = ' . $this->trader_name
+            . ', trader_name_components = ' . $this->trader_name_components
             . ', trader_company_type = ' . $this->trader_company_type
             . ', trader_address = ' . $this->trader_address
             . ', trader_address_components = ' . $this->trader_address_components
