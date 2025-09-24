@@ -19,8 +19,8 @@
 			\VIESAPI\VIESAPIClient::registerAutoloader();
 			
 			// Create a client object and establish connection to the production system
-			// id – API identifier
-			// key – API key (keep it secret)
+			// id - API identifier
+			// key - API key (keep it secret)
 			// $viesapi = new \VIESAPI\VIESAPIClient('id', 'key');
 			
 			// Create a client object and establish connection to the test system
@@ -28,13 +28,21 @@
 			
 			$euvat = 'PL7171642051';
 
+            // Get current EU VIES system status
+            $vies_system = $viesapi->get_vies_status();
+
+            if ($vies_system) {
+                echo '<pre>' . print_r($vies_system, true) . '</pre>';
+            } else {
+                echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
+            }
+
 			// Get current account status
 			$account = $viesapi->get_account_status();
 
 			if ($account) {
 				echo '<pre>' . print_r($account, true) . '</pre>';
-			}
-			else {
+			} else {
 				echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
 			}
 
@@ -43,8 +51,7 @@
 				
 			if ($vies) {
 			    echo '<pre>' . print_r($vies, true) . '</pre>';
-			}
-			else {
+			} else {
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
 			}
 
@@ -53,8 +60,7 @@
 
             if ($vies_parsed) {
                 echo '<pre>' . print_r($vies_parsed, true) . '</pre>';
-            }
-            else {
+            } else {
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
             }
 
@@ -69,8 +75,7 @@
 
             if ($token) {
                 echo '<pre>Batch token: ' . $token . '</pre>';
-            }
-            else {
+            } else {
                 echo '<p>Error: ' . $viesapi->get_last_error() . ' (code: ' . $viesapi->get_last_error_code() . ')</p>';
                 die();
             }

@@ -38,6 +38,8 @@ class AddressComponents
 
     public $house_number;
 
+    public $other;
+
     /**
      * Get object data as string
      * @return string
@@ -50,6 +52,7 @@ class AddressComponents
             . ', street = ' . $this->street
             . ', street_number = ' . $this->street_number
             . ', house_number = ' . $this->house_number
+            . ', other = ' . $this->other
             . ']';
     }
 }

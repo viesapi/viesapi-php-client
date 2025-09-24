@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.3.1';
+    const VERSION = '1.3.2';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -51,11 +51,13 @@ class VIESAPIClient
 			'Error.php',
             'LegalForm.php',
 			'AccountStatus.php',
+            'CountryStatus.php',
             'NameComponents.php',
             'AddressComponents.php',
             'BatchResult.php',
             'VIESData.php',
             'VIESError.php',
+            'VIESStatus.php',
             'NIP.php',
             'EUVAT.php',
             'Number.php'
@@ -142,23 +144,7 @@ class VIESAPIClient
         }
     
         // parse response
-        $vies = new VIESData();
-    
-        $vies->uid = $this->xpath($doc, '/result/vies/uid/text()');
-        $vies->country_code = $this->xpath($doc, '/result/vies/countryCode/text()');
-        $vies->vat_number = $this->xpath($doc, '/result/vies/vatNumber/text()');
-        
-        $vies->valid = ($this->xpath($doc, '/result/vies/valid/text()') == 'true' ? true : false);
-        
-        $vies->trader_name = $this->xpath($doc, '/result/vies/traderName/text()');
-        $vies->trader_company_type = $this->xpath($doc, '/result/vies/traderCompanyType/text()');
-        $vies->trader_address = $this->xpath($doc, '/result/vies/traderAddress/text()');
-        
-        $vies->id = $this->xpath($doc, '/result/vies/id/text()');
-        $vies->date = $this->xpath_date($doc, '/result/vies/date/text()');
-        $vies->source = $this->xpath($doc, '/result/vies/source/text()');
-
-		return $vies;
+		return $this->parse($doc, '/result/vies');
     }
 
     /**
@@ -186,42 +172,7 @@ class VIESAPIClient
         }
 
         // parse response
-        $vies = new VIESData();
-
-        $vies->uid = $this->xpath($doc, '/result/vies/uid/text()');
-        $vies->country_code = $this->xpath($doc, '/result/vies/countryCode/text()');
-        $vies->vat_number = $this->xpath($doc, '/result/vies/vatNumber/text()');
-
-        $vies->valid = ($this->xpath($doc, '/result/vies/valid/text()') == 'true');
-
-        $vies->trader_name = $this->xpath($doc, '/result/vies/traderName/text()');
-
-        if (!empty($this->xpath($doc, '/result/vies/traderNameComponents/name/text()'))) {
-            $vies->trader_name_components = new NameComponents();
-            $vies->trader_name_components->name = $this->xpath($doc, '/result/vies/traderNameComponents/name/text()');
-            $vies->trader_name_components->legal_form = $this->xpath($doc, '/result/vies/traderNameComponents/legalForm/text()');
-            $vies->trader_name_components->legal_form_canonical_id = intval($this->xpath($doc, '/result/vies/traderNameComponents/legalFormCanonicalId/text()'));
-            $vies->trader_name_components->legal_form_canonical_name = $this->xpath($doc, '/result/vies/traderNameComponents/legalFormCanonicalName/text()');
-        }
-
-        $vies->trader_company_type = $this->xpath($doc, '/result/vies/traderCompanyType/text()');
-        $vies->trader_address = $this->xpath($doc, '/result/vies/traderAddress/text()');
-
-        if (!empty($this->xpath($doc, '/result/vies/traderAddressComponents/country/text()'))) {
-            $vies->trader_address_components = new AddressComponents();
-            $vies->trader_address_components->country = $this->xpath($doc, '/result/vies/traderAddressComponents/country/text()');
-            $vies->trader_address_components->postal_code = $this->xpath($doc, '/result/vies/traderAddressComponents/postalCode/text()');
-            $vies->trader_address_components->city = $this->xpath($doc, '/result/vies/traderAddressComponents/city/text()');
-            $vies->trader_address_components->street = $this->xpath($doc, '/result/vies/traderAddressComponents/street/text()');
-            $vies->trader_address_components->street_number = $this->xpath($doc, '/result/vies/traderAddressComponents/streetNumber/text()');
-            $vies->trader_address_components->house_number = $this->xpath($doc, '/result/vies/traderAddressComponents/houseNumber/text()');
-        }
-
-        $vies->id = $this->xpath($doc, '/result/vies/id/text()');
-        $vies->date = $this->xpath_date($doc, '/result/vies/date/text()');
-        $vies->source = $this->xpath($doc, '/result/vies/source/text()');
-
-        return $vies;
+        return $this->parse($doc, '/result/vies');
     }
 
     /**
@@ -235,7 +186,7 @@ class VIESAPIClient
         $this->clear();
 
         // validate input
-        if (count($numbers) < 2 || count($numbers) > 99) {
+        if (count($numbers) < 3 || count($numbers) > 99) {
             $this->set(Error::CLI_BATCH_SIZE);
             return false;
         }
@@ -301,6 +252,7 @@ class VIESAPIClient
 
         // parse response
         $br = new BatchResult();
+        $br->uid = $this->xpath($doc, '/result/batch/uid/text()');
 
         for ($i = 1; ; $i++) {
             $uid = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/uid/text()');
@@ -309,19 +261,7 @@ class VIESAPIClient
                 break;
             }
 
-            $vd = new VIESData();
-            $vd->uid = $uid;
-            $vd->country_code = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/countryCode/text()');
-            $vd->vat_number = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/vatNumber/text()');
-            $vd->valid = ($this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/valid/text()') == 'true' ? true : false);
-            $vd->trader_name = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderName/text()');
-            $vd->trader_company_type = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderCompanyType/text()');
-            $vd->trader_address = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/traderAddress/text()');
-            $vd->id = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/id/text()');
-            $vd->date = $this->xpath_date($doc, '/result/batch/numbers/vies[' . $i . ']/date/text()');
-            $vd->source = $this->xpath($doc, '/result/batch/numbers/vies[' . $i . ']/source/text()');
-
-            $br->numbers[] = $vd;
+            $br->numbers[] = $this->parse($doc, '/result/batch/numbers/vies[' . $i . ']');
         }
 
         for ($i = 1; ; $i++) {
@@ -398,6 +338,48 @@ class VIESAPIClient
         return $as;
     }
 
+    /**
+     * Get current EU VIES system status
+     * @return VIESStatus|false
+     */
+    public function get_vies_status()
+    {
+        // clear error
+        $this->clear();
+
+        // construct path
+        $url = ($this->url . '/check/vies/status');
+
+        // send request
+        $doc = $this->get($url);
+
+        if (! $doc) {
+            return false;
+        }
+
+        // parse response
+        $vs = new VIESStatus();
+
+        $vs->uid = $this->xpath($doc, '/result/vies/uid/text()');
+        $vs->available = ($this->xpath($doc, '/result/vies/available/text()') == 'true');
+
+        for ($i = 1;; $i ++) {
+            $code = $this->xpath($doc, '/result/vies/countries/country[' . $i . ']/countryCode/text()');
+
+            if (!$code) {
+                break;
+            }
+
+            $cs = new CountryStatus();
+            $cs->countryCode = $code;
+            $cs->status = $this->xpath($doc, '/result/vies/countries/country[' . $i . ']/status/text()');
+
+            $vs->countries[] = $cs;
+        }
+
+        return $vs;
+    }
+
 	/**
      * Get last error code
      * @return int error code
@@ -423,6 +405,53 @@ class VIESAPIClient
     {
         $this->errcode = 0;
         $this->err = '';
+    }
+
+    /**
+     * Parse VIES data object from XML document
+     * @param \SimpleXMLElement $doc XML document
+     * @param string $prefix XPath prefix
+     * @return VIESData
+     */
+    private function parse($doc, $prefix)
+    {
+        $vies = new VIESData();
+
+        $vies->uid = $this->xpath($doc, $prefix . '/uid/text()');
+        $vies->country_code = $this->xpath($doc, $prefix . '/countryCode/text()');
+        $vies->vat_number = $this->xpath($doc, $prefix . '/vatNumber/text()');
+
+        $vies->valid = ($this->xpath($doc, $prefix . '/valid/text()') == 'true');
+
+        $vies->trader_name = $this->xpath($doc, $prefix . '/traderName/text()');
+
+        if (!empty($this->xpath($doc, $prefix . '/traderNameComponents/name/text()'))) {
+            $vies->trader_name_components = new NameComponents();
+            $vies->trader_name_components->name = $this->xpath($doc, $prefix . '/traderNameComponents/name/text()');
+            $vies->trader_name_components->legal_form = $this->xpath($doc, $prefix . '/traderNameComponents/legalForm/text()');
+            $vies->trader_name_components->legal_form_canonical_id = intval($this->xpath($doc, $prefix . '/traderNameComponents/legalFormCanonicalId/text()'));
+            $vies->trader_name_components->legal_form_canonical_name = $this->xpath($doc, $prefix . '/traderNameComponents/legalFormCanonicalName/text()');
+        }
+
+        $vies->trader_company_type = $this->xpath($doc, $prefix . '/traderCompanyType/text()');
+        $vies->trader_address = $this->xpath($doc, $prefix . '/traderAddress/text()');
+
+        if (!empty($this->xpath($doc, $prefix . '/traderAddressComponents/country/text()'))) {
+            $vies->trader_address_components = new AddressComponents();
+            $vies->trader_address_components->country = $this->xpath($doc, $prefix . '/traderAddressComponents/country/text()');
+            $vies->trader_address_components->postal_code = $this->xpath($doc, $prefix . '/traderAddressComponents/postalCode/text()');
+            $vies->trader_address_components->city = $this->xpath($doc, $prefix . '/traderAddressComponents/city/text()');
+            $vies->trader_address_components->street = $this->xpath($doc, $prefix . '/traderAddressComponents/street/text()');
+            $vies->trader_address_components->street_number = $this->xpath($doc, $prefix . '/traderAddressComponents/streetNumber/text()');
+            $vies->trader_address_components->house_number = $this->xpath($doc, $prefix . '/traderAddressComponents/houseNumber/text()');
+            $vies->trader_address_components->other = $this->xpath($doc, $prefix . '/traderAddressComponents/other/text()');
+        }
+
+        $vies->id = $this->xpath($doc, $prefix . '/id/text()');
+        $vies->date = $this->xpath_date($doc, $prefix . '/date/text()');
+        $vies->source = $this->xpath($doc, $prefix . '/source/text()');
+
+        return $vies;
     }
 
     /**

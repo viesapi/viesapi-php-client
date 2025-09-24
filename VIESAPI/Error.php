@@ -94,7 +94,7 @@ class Error
 		self::CLI_EXCEPTION   => 'Function generated an exception',
 		self::CLI_DATEFORMAT  => 'Date has an invalid format',
 		self::CLI_INPUT       => 'Invalid input parameter',
-        self::CLI_BATCH_SIZE  => 'Batch size limit exceeded [2-99]'
+        self::CLI_BATCH_SIZE  => 'Batch size limit exceeded [3-99]'
     );
 
     /**

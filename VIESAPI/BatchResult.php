@@ -26,6 +26,8 @@ namespace VIESAPI;
  */
 class BatchResult
 {
+    public $uid;
+
     public $numbers;
     
     public $errors;
@@ -42,7 +44,8 @@ class BatchResult
      */
     public function __toString()
     {
-        return 'BatchResult: [numbers = ' . implode(', ', $this->numbers)
+        return 'BatchResult: [uid = ' . $this->uid
+            . ', numbers = ' . implode(', ', $this->numbers)
             . ', errors = ' . implode(', ', $this->errors)
             . ']';
     }
