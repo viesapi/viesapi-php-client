@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022-2025 NETCAT (www.netcat.pl)
+ * Copyright 2022-2026 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2025 NETCAT (www.netcat.pl)
+ * @copyright 2022-2026 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -42,6 +42,8 @@ class AccountStatus
     public $item_price_parsed;
 
     public $limit;
+
+    public $additional_queries;
 
     public $request_delay;
 
@@ -85,6 +87,7 @@ class AccountStatus
             . ', item_price_parsed = ' . $this->item_price_parsed
 
             . ', limit = ' . $this->limit
+            . ', additional_queries = ' . $this->additional_queries
             . ', request_delay = ' . $this->request_delay
             . ', domain_limit = ' . $this->domain_limit
 

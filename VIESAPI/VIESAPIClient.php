@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2022-2025 NETCAT (www.netcat.pl)
+ * Copyright 2022-2026 NETCAT (www.netcat.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  * 
  * @author NETCAT <firma@netcat.pl>
- * @copyright 2022-2025 NETCAT (www.netcat.pl)
+ * @copyright 2022-2026 NETCAT (www.netcat.pl)
  * @license http://www.apache.org/licenses/LICENSE-2.0
  */
 
@@ -26,7 +26,7 @@ namespace VIESAPI;
  */
 class VIESAPIClient
 {
-    const VERSION = '1.3.2';
+    const VERSION = '1.3.3';
 
     const PRODUCTION_URL = 'https://viesapi.eu/api';
     const TEST_URL = 'https://viesapi.eu/api-test';
@@ -38,6 +38,8 @@ class VIESAPIClient
     private $id;
     private $key;
     private $app;
+
+    private $curl_cb;
 
     private $errcode;
     private $err;
@@ -98,6 +100,7 @@ class VIESAPIClient
         }
         
         $this->app = '';
+        $this->curl_cb = null;
         $this->clear();
     }
 
@@ -117,6 +120,15 @@ class VIESAPIClient
     public function set_app($app)
     {
         $this->app = $app;
+    }
+
+    /**
+     * Set callback for curl customization
+     * @param callable $cb curl callback with a resource|CurlHandle as input parameter
+     */
+    public function set_curl_cb($cb)
+    {
+        $this->curl_cb = $cb;
     }
 
     /**
@@ -318,6 +330,7 @@ class VIESAPIClient
         $as->item_price_parsed = floatval($this->xpath($doc, '/result/account/billingPlan/itemPriceStatusParsed/text()'));
 
 		$as->limit = intval($this->xpath($doc, '/result/account/billingPlan/limit/text()'));
+        $as->additional_queries = intval($this->xpath($doc, '/result/account/billingPlan/additionalQueries/text()'));
 		$as->request_delay = intval($this->xpath($doc, '/result/account/billingPlan/requestDelay/text()'));
 		$as->domain_limit = intval($this->xpath($doc, '/result/account/billingPlan/domainLimit/text()'));
 		
@@ -518,7 +531,7 @@ class VIESAPIClient
     private function set_curl_opt($curl)
     {
         if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN') {
-            // curl on a windows does not know where to look for certificates
+            // curl on Windows does not know where to look for certificates
             // use local info downloaded from https://curl.haxx.se/docs/caextract.html
             curl_setopt($curl, CURLOPT_CAINFO, __DIR__ . DIRECTORY_SEPARATOR . 'cacert.pem');
         }
@@ -526,6 +539,12 @@ class VIESAPIClient
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+
+        // allow customization
+        if (is_callable($this->curl_cb)) {
+            $cb = $this->curl_cb;
+            $cb($curl);
+        }
     }
 
     /**

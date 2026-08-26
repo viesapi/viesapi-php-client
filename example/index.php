@@ -14,7 +14,7 @@
 			error_reporting(E_ALL);
 			
 			// Include VIES API
-			require_once 'VIESAPI/VIESAPIClient.php';
+			require_once __DIR__ . '/../VIESAPI/VIESAPIClient.php';
 			
 			\VIESAPI\VIESAPIClient::registerAutoloader();
 			
@@ -27,6 +27,12 @@
 			$viesapi = new \VIESAPI\VIESAPIClient();
 			
 			$euvat = 'PL7171642051';
+
+            // Customize curl client (optional)
+            $viesapi->set_curl_cb(function($curl) {
+                curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
+                curl_setopt($curl, CURLOPT_TIMEOUT, 0);
+            });
 
             // Get current EU VIES system status
             $vies_system = $viesapi->get_vies_status();
