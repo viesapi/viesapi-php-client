@@ -591,7 +591,8 @@ class VIESAPIClient
 
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-        curl_close($curl);
+        if (PHP_VERSION_ID < 80000)
+        	curl_close($curl);
 
         if (! $code) {
             $this->set(Error::CLI_RESPONSE);
@@ -670,7 +671,8 @@ class VIESAPIClient
 
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-        curl_close($curl);
+		if (PHP_VERSION_ID < 80000)
+        	curl_close($curl);
 
         if (! $code) {
             $this->set(Error::CLI_RESPONSE);
